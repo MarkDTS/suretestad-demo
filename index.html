@@ -1,15 +1,581 @@
 <!DOCTYPE html>
+<html lang="en">
 <head>
-    <title>SureTest Automation Demo:SAD</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Room Finder and Information Form</title>
+  <style>
+    * { box-sizing: border-box; }
+    :root {
+      --blue: #245fa6;
+      --blue-dark: #194b86;
+      --border: #d5dce5;
+      --muted: #5b6573;
+      --surface: #ffffff;
+      --background: #f3f6fa;
+    }
+    body {
+      margin: 0;
+      padding: 24px;
+      font-family: Arial, sans-serif;
+      color: #202833;
+      background: var(--background);
+    }
+    main {
+      width: 100%;
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 24px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      box-shadow: 0 3px 12px rgba(0,0,0,.05);
+    }
+    h1 { margin: 0 0 18px; font-size: 1.7rem; }
+    h2 { font-size: 1.15rem; margin: 0 0 14px; }
+    .tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      padding-bottom: 12px;
+      margin-bottom: 22px;
+      border-bottom: 1px solid var(--border);
+    }
+    .tab {
+      background: transparent;
+      color: #394555;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      padding: 10px 15px;
+    }
+    .tab[aria-selected="true"] {
+      color: var(--blue-dark);
+      background: #eaf2fc;
+      border-color: #c5daf6;
+      font-weight: 700;
+    }
+    .workspace {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
+      gap: 24px;
+      align-items: start;
+    }
+    .primary { min-width: 0; }
+    .panel {
+      padding: 18px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin-bottom: 20px;
+      background: #fff;
+    }
+    .field { margin-bottom: 15px; }
+    .additional-details { margin-top: 22px; }
+    .additional-details-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 0 18px;
+    }
+    .additional-details-grid .field { min-width: 0; }
+    .coded-field select { display: block; width: 100%; padding: 10px 12px; border: 1px solid #b9c2ce; border-radius: 5px; font: inherit; background: #fff; }
+
+    .native-coded-select { position:absolute !important; width:1px !important; height:1px !important; padding:0 !important; border:0 !important; clip:rect(0,0,0,0) !important; overflow:hidden !important; }
+    .coded-dropdown { position:relative; width:100%; }
+    .coded-dropdown-toggle { display:block; width:100%; min-height:42px; padding:10px 12px; text-align:left; border:1px solid #b9c2ce; border-radius:5px; background:#fff; color:inherit; font:inherit; }
+    .coded-search-input:focus { outline:2px solid #8ab4f8; outline-offset:1px; }
+    .coded-dropdown-menu { position:absolute; z-index:100; top:calc(100% + 3px); left:0; right:0; max-height:260px; overflow:auto; border:1px solid #aeb9c7; border-radius:5px; background:white; box-shadow:0 5px 14px rgba(0,0,0,.14); }
+    .coded-options-table { width:100%; border-collapse:collapse; table-layout:fixed; }
+    .coded-options-table th { position:sticky; top:0; background:#edf2f7; text-align:left; padding:7px 10px; border-bottom:1px solid #cbd5e1; }
+    .coded-options-table th:first-child,.coded-options-table .option-id { width:64px; }
+    .coded-options-table td { border-bottom:1px solid #e5eaf0; padding:0; }
+    .coded-options-table .option-id { padding:8px 10px; font-variant-numeric:tabular-nums; vertical-align:middle; }
+    .coded-option { width:100%; display:block; text-align:left; padding:8px 10px; border:0; background:white; color:inherit; }
+    .coded-option:hover,.coded-option:focus-visible { background:#eaf3ff; }
+    .coded-dropdown-menu[hidden] { display:none; }
+
+    label { display: block; margin-bottom: 6px; font-weight: 600; }
+    .choice-group { margin: 0 0 18px; padding: 0; border: 0; min-width: 0; }
+    .choice-group:last-child { margin-bottom: 0; }
+    .choice-group legend { margin-bottom: 10px; font-weight: 700; }
+    .choice-list { display: flex; flex-wrap: wrap; gap: 10px 18px; }
+    .choice-item { display: inline-flex; align-items: center; gap: 7px; margin: 0; font-weight: 400; }
+    .choice-item input { display: inline-block; width: auto; margin: 0; padding: 0; }
+    input, textarea, select {
+      display: block;
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #b9c2ce;
+      border-radius: 5px;
+      font: inherit;
+      background: #fff;
+    }
+    input:focus, textarea:focus, select:focus, button:focus-visible {
+      outline: 2px solid #8bbcff;
+      outline-offset: 2px;
+    }
+    button { cursor: pointer; font: inherit; }
+    .primary-button {
+      padding: 10px 16px;
+      border: 0;
+      border-radius: 5px;
+      background: var(--blue);
+      color: white;
+    }
+    .primary-button:hover { background: var(--blue-dark); }
+    .search-wrap { position: relative; }
+    .room-search { margin-bottom: 0; }
+    .dropdown {
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      right: 0;
+      z-index: 10;
+      max-height: 300px;
+      overflow-y: auto;
+      border: 1px solid #b9c2ce;
+      border-radius: 6px;
+      background: white;
+      box-shadow: 0 8px 20px rgba(0,0,0,.12);
+    }
+    .dropdown[hidden] { display: none; }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; text-align: left; }
+    th, td { padding: 11px 10px; border-bottom: 1px solid #e3e7ed; }
+    th { position: sticky; top: 0; background: #f3f6fa; font-size: .92rem; }
+    tbody tr:last-child td { border-bottom: 0; }
+    tbody tr:hover { background: #f8fbff; }
+    #room-results tr { cursor: pointer; }
+    #room-results tr:focus { outline: 2px solid #8ab4f8; outline-offset: -2px; }
+    .status { font-weight: 700; letter-spacing: .02em; }
+    .status-o { color: #9b3b3b; }
+    .status-e { color: #197044; }
+    .status-d { color: #946200; }
+    .empty-state { color: var(--muted); padding: 14px; }
+    .scroll-panel {
+      position: sticky;
+      top: 20px;
+      min-width: 0;
+      padding: 18px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #fafbfc;
+    }
+    .scroll-frame {
+      height: min(65vh, 520px);
+      min-height: 260px;
+      overflow-y: auto;
+      padding: 14px;
+      border: 1px solid #c7d0dc;
+      border-radius: 5px;
+      background: white;
+      line-height: 1.55;
+    }
+    .scroll-frame p { margin-top: 0; }
+    .scroll-frame h3 { margin-top: 0; font-size: 1rem; }
+    .tab-panel[hidden] { display: none; }
+    .result-hint { margin: 9px 0 0; color: var(--muted); font-size: .9rem; }
+    @media (max-width: 800px) {
+      body { padding: 12px; }
+      main { padding: 16px; }
+      .workspace { grid-template-columns: 1fr; }
+      .scroll-panel { position: static; }
+      .scroll-frame { height: 260px; }
+    }
+  </style>
 </head>
 <body>
-    <div>
-        <h2>SureTest Automation Demo</h2>
-        <p>This site will offer different web elements for developers to practice with.</p>
+  <main>
+    <h1>Room Finder</h1>
+
+    <nav class="tabs" role="tablist" aria-label="Main navigation">
+      <button class="tab" id="tab-rooms" role="tab" aria-selected="true" aria-controls="panel-rooms" type="button">Rooms</button>
+      <button class="tab" id="tab-information" role="tab" aria-selected="false" aria-controls="panel-information" type="button" tabindex="-1">Information</button>
+      <button class="tab" id="tab-help" role="tab" aria-selected="false" aria-controls="panel-help" type="button" tabindex="-1">Help</button>
+    </nav>
+
+    <div class="workspace">
+      <div class="primary">
+        <section class="tab-panel" id="panel-rooms" role="tabpanel" aria-labelledby="tab-rooms">
+          <div class="panel">
+            <h2>Search Available Rooms</h2>
+            <div class="search-wrap">
+              <input class="room-search" type="text" id="room-search" autocomplete="off" spellcheck="false" aria-label="Search Available Rooms" aria-controls="room-dropdown" aria-expanded="false" role="combobox" aria-autocomplete="list">
+              <div class="dropdown" id="room-dropdown" hidden>
+                <div class="table-wrap">
+                  <table class="coded-options-table">
+                    <thead>
+                      <tr>
+                        <th scope="col">Beds ID</th>
+                        <th scope="col">Room Name</th>
+                        <th scope="col">Availability</th>
+                        <th scope="col">Patient</th>
+                        <th scope="col">Beds</th>
+                      </tr>
+                    </thead>
+                    <tbody id="room-results"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+            <p class="result-hint" id="result-count" aria-live="polite">Start typing to see matching rooms. Status codes: O = Occupied, E = Empty, D = Dirty.</p>
+          </div>
+
+          <div class="panel" id="room-options">
+            <h2>Room Preferences</h2>
+            <fieldset class="choice-group">
+              <legend>Preferred Room Type</legend>
+              <div class="choice-list">
+                <label class="choice-item" for="room-type-standard"><input id="room-type-standard" type="radio" name="room-type" value="standard"> Standard</label>
+                <label class="choice-item" for="room-type-deluxe"><input id="room-type-deluxe" type="radio" name="room-type" value="deluxe"> Deluxe</label>
+                <label class="choice-item" for="room-type-suite"><input id="room-type-suite" type="radio" name="room-type" value="suite"> Suite</label>
+                <label class="choice-item" for="room-type-accessible"><input id="room-type-accessible" type="radio" name="room-type" value="accessible"> Accessible</label>
+                <label class="choice-item" for="room-type-family"><input id="room-type-family" type="radio" name="room-type" value="family"> Family</label>
+              </div>
+            </fieldset>
+            <fieldset class="choice-group">
+              <legend>Additional Options</legend>
+              <div class="choice-list">
+                <label class="choice-item" for="option-quiet-area"><input id="option-quiet-area" type="checkbox" name="options" value="quiet-area"> Quiet area</label>
+                <label class="choice-item" for="option-near-elevator"><input id="option-near-elevator" type="checkbox" name="options" value="near-elevator"> Near elevator</label>
+                <label class="choice-item" for="option-extra-bed"><input id="option-extra-bed" type="checkbox" name="options" value="extra-bed"> Extra bed</label>
+                <label class="choice-item" for="option-late-checkout"><input id="option-late-checkout" type="checkbox" name="options" value="late-checkout"> Late checkout</label>
+                <label class="choice-item" for="option-non-smoking"><input id="option-non-smoking" type="checkbox" name="options" value="non-smoking"> Non-smoking</label>
+              </div>
+            </fieldset>
+          </div>
+        </section>
+
+        <section class="tab-panel" id="panel-information" role="tabpanel" aria-labelledby="tab-information" hidden>
+          <div class="panel">
+            <h2>Information Form</h2>
+            <form id="sample-form">
+              <div class="field">
+                <label for="full-name">Full Name</label>
+                <input type="text" id="full-name" name="full-name" placeholder="Enter your full name">
+              </div>
+              <div class="field">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" name="email" placeholder="you@example.com">
+              </div>
+              <div class="field">
+                <label for="subject">Subject</label>
+                <input type="text" id="subject" name="subject" placeholder="Enter a subject">
+              </div>
+              <div class="field">
+                <label for="notes">Notes</label>
+                <textarea id="notes" name="notes" rows="4" placeholder="Add any notes here"></textarea>
+              </div>
+              <button class="primary-button" type="submit">Submit</button>
+              <p id="form-message" role="status" aria-live="polite"></p>
+            </form>
+          </div>
+        </section>
+
+        <section class="tab-panel" id="panel-help" role="tabpanel" aria-labelledby="tab-help" hidden>
+          <div class="panel">
+            <h2>Help</h2>
+            <p>Type in the Rooms search field to show a dropdown table. Search matches room ID, bed count, bed location, room name, and status code. Status codes are O (occupied), E (empty), and D (dirty).</p>
+            <p>The room list is demonstration data stored in this HTML page; it is not connected to a live room inventory system. The Patient column shows example sex values for occupied rooms only; replace these sample values with verified information as appropriate.</p>
+          </div>
+        </section>
+      </div>
+
+      <aside class="scroll-panel" aria-labelledby="scroll-title">
+        <h2 id="scroll-title">Scrollable Text Frame</h2>
+        <div class="scroll-frame" tabindex="0" aria-label="Scrollable generic sample text">
+          <h3>Generic Sample Content</h3>
+          <p>This independent frame sits on the right side of the main page. Scroll inside this box to read the full sample content without moving the main page.</p>
+          <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer vitae sem sed justo consequat tincidunt. Curabitur at ligula vel nibh volutpat tincidunt. Donec posuere, magna sit amet facilisis tincidunt, erat neque blandit risus, in varius erat arcu vitae nulla.</p>
+          <p>Praesent euismod, justo sed luctus fermentum, purus sapien ultrices nibh, at consequat libero lorem vitae lectus. Suspendisse potenti. Duis tincidunt, augue vel posuere tempor, sem massa ullamcorper lectus, nec placerat erat erat sit amet augue.</p>
+          <p>Aliquam erat volutpat. Vivamus feugiat, nibh a commodo cursus, lectus nisl pretium augue, non luctus nisi neque in massa. Sed vitae velit a augue feugiat vulputate. Mauris malesuada felis sed lectus tempor, vel feugiat mi tincidunt.</p>
+          <p>Nam non turpis eget lacus finibus tristique. Nulla facilisi. Aenean sit amet arcu sed urna feugiat feugiat. Donec at sem non justo bibendum condimentum. Curabitur tincidunt eros a augue tempor, a aliquet felis ullamcorper.</p>
+          <p>Morbi porta turpis non mauris facilisis, a malesuada risus laoreet. Etiam et tellus vitae nibh convallis pellentesque. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas.</p>
+          <p>Donec vitae neque non sapien hendrerit gravida. In hac habitasse platea dictumst. Sed a orci sed erat interdum tincidunt. Suspendisse potenti, and this additional paragraph ensures that the frame can be scrolled independently.</p>
+        </div>
+      </aside>
     </div>
 
-    <frameset cols="400,500">
-        <frame src=""https://developer.mozzila.org/en/HTML/Element/iframe"/>
-    </frameset>
+    <section class="panel additional-details" id="additional-details" aria-labelledby="additional-details-title">
+      <h2 id="additional-details-title">Additional Details</h2>
+      <div class="additional-details-grid">
+        <div class="field">
+            <label for="spoken-language">Spoken Language</label>
+            <select id="spoken-language" name="spoken-language" class="native-coded-select" aria-hidden="true" tabindex="-1">
+              <option value="">Select spoken language</option><option value="101">English (101)</option><option value="102">Spanish (102)</option><option value="103">Mandarin Chinese (103)</option><option value="104">Cantonese (104)</option><option value="105">French (105)</option><option value="106">Arabic (106)</option><option value="107">Hindi (107)</option><option value="108">Bengali (108)</option><option value="109">Portuguese (109)</option><option value="110">Russian (110)</option><option value="111">Japanese (111)</option><option value="112">Korean (112)</option><option value="113">Vietnamese (113)</option><option value="114">Tagalog/Filipino (114)</option><option value="115">German (115)</option><option value="116">Italian (116)</option><option value="117">Urdu (117)</option><option value="118">Persian/Farsi (118)</option><option value="119">Swahili (119)</option><option value="120">American Sign Language (120)</option><option value="998">Other (998)</option><option value="999">Prefer not to say (999)</option>
+            </select>
+            <div class="coded-dropdown" data-select="spoken-language">
+              <input type="text" class="coded-dropdown-toggle coded-search-input" aria-label="Spoken Language" aria-expanded="false" autocomplete="off" spellcheck="false">
+              <div class="coded-dropdown-menu" hidden>
+                <table class="coded-options-table" aria-label="spoken-language options"><thead><tr><th scope="col">ID</th><th scope="col">Option</th></tr></thead><tbody><tr><td class="option-id">101</td><td><button type="button" class="coded-option" data-value="101">English</button></td></tr><tr><td class="option-id">102</td><td><button type="button" class="coded-option" data-value="102">Spanish</button></td></tr><tr><td class="option-id">103</td><td><button type="button" class="coded-option" data-value="103">Mandarin Chinese</button></td></tr><tr><td class="option-id">104</td><td><button type="button" class="coded-option" data-value="104">Cantonese</button></td></tr><tr><td class="option-id">105</td><td><button type="button" class="coded-option" data-value="105">French</button></td></tr><tr><td class="option-id">106</td><td><button type="button" class="coded-option" data-value="106">Arabic</button></td></tr><tr><td class="option-id">107</td><td><button type="button" class="coded-option" data-value="107">Hindi</button></td></tr><tr><td class="option-id">108</td><td><button type="button" class="coded-option" data-value="108">Bengali</button></td></tr><tr><td class="option-id">109</td><td><button type="button" class="coded-option" data-value="109">Portuguese</button></td></tr><tr><td class="option-id">110</td><td><button type="button" class="coded-option" data-value="110">Russian</button></td></tr><tr><td class="option-id">111</td><td><button type="button" class="coded-option" data-value="111">Japanese</button></td></tr><tr><td class="option-id">112</td><td><button type="button" class="coded-option" data-value="112">Korean</button></td></tr><tr><td class="option-id">113</td><td><button type="button" class="coded-option" data-value="113">Vietnamese</button></td></tr><tr><td class="option-id">114</td><td><button type="button" class="coded-option" data-value="114">Tagalog/Filipino</button></td></tr><tr><td class="option-id">115</td><td><button type="button" class="coded-option" data-value="115">German</button></td></tr><tr><td class="option-id">116</td><td><button type="button" class="coded-option" data-value="116">Italian</button></td></tr><tr><td class="option-id">117</td><td><button type="button" class="coded-option" data-value="117">Urdu</button></td></tr><tr><td class="option-id">118</td><td><button type="button" class="coded-option" data-value="118">Persian/Farsi</button></td></tr><tr><td class="option-id">119</td><td><button type="button" class="coded-option" data-value="119">Swahili</button></td></tr><tr><td class="option-id">120</td><td><button type="button" class="coded-option" data-value="120">American Sign Language</button></td></tr><tr><td class="option-id">998</td><td><button type="button" class="coded-option" data-value="998">Other</button></td></tr><tr><td class="option-id">999</td><td><button type="button" class="coded-option" data-value="999">Prefer not to say</button></td></tr></tbody></table>
+              </div>
+            </div>
+          </div>
+        <div class="field">
+            <label for="written-language">Written Language</label>
+            <select id="written-language" name="written-language" class="native-coded-select" aria-hidden="true" tabindex="-1">
+              <option value="">Select written language</option><option value="201">English (201)</option><option value="202">Spanish (202)</option><option value="203">Simplified Chinese (203)</option><option value="204">Traditional Chinese (204)</option><option value="205">French (205)</option><option value="206">Arabic (206)</option><option value="207">Hindi (207)</option><option value="208">Bengali (208)</option><option value="209">Portuguese (209)</option><option value="210">Russian (210)</option><option value="211">Japanese (211)</option><option value="212">Korean (212)</option><option value="213">Vietnamese (213)</option><option value="214">Tagalog/Filipino (214)</option><option value="215">German (215)</option><option value="216">Italian (216)</option><option value="217">Urdu (217)</option><option value="218">Persian/Farsi (218)</option><option value="219">Swahili (219)</option><option value="998">Other (998)</option><option value="999">Prefer not to say (999)</option>
+            </select>
+            <div class="coded-dropdown" data-select="written-language">
+              <input type="text" class="coded-dropdown-toggle coded-search-input" aria-label="Written Language" aria-expanded="false" autocomplete="off" spellcheck="false">
+              <div class="coded-dropdown-menu" hidden>
+                <table class="coded-options-table" aria-label="written-language options"><thead><tr><th scope="col">ID</th><th scope="col">Option</th></tr></thead><tbody><tr><td class="option-id">201</td><td><button type="button" class="coded-option" data-value="201">English</button></td></tr><tr><td class="option-id">202</td><td><button type="button" class="coded-option" data-value="202">Spanish</button></td></tr><tr><td class="option-id">203</td><td><button type="button" class="coded-option" data-value="203">Simplified Chinese</button></td></tr><tr><td class="option-id">204</td><td><button type="button" class="coded-option" data-value="204">Traditional Chinese</button></td></tr><tr><td class="option-id">205</td><td><button type="button" class="coded-option" data-value="205">French</button></td></tr><tr><td class="option-id">206</td><td><button type="button" class="coded-option" data-value="206">Arabic</button></td></tr><tr><td class="option-id">207</td><td><button type="button" class="coded-option" data-value="207">Hindi</button></td></tr><tr><td class="option-id">208</td><td><button type="button" class="coded-option" data-value="208">Bengali</button></td></tr><tr><td class="option-id">209</td><td><button type="button" class="coded-option" data-value="209">Portuguese</button></td></tr><tr><td class="option-id">210</td><td><button type="button" class="coded-option" data-value="210">Russian</button></td></tr><tr><td class="option-id">211</td><td><button type="button" class="coded-option" data-value="211">Japanese</button></td></tr><tr><td class="option-id">212</td><td><button type="button" class="coded-option" data-value="212">Korean</button></td></tr><tr><td class="option-id">213</td><td><button type="button" class="coded-option" data-value="213">Vietnamese</button></td></tr><tr><td class="option-id">214</td><td><button type="button" class="coded-option" data-value="214">Tagalog/Filipino</button></td></tr><tr><td class="option-id">215</td><td><button type="button" class="coded-option" data-value="215">German</button></td></tr><tr><td class="option-id">216</td><td><button type="button" class="coded-option" data-value="216">Italian</button></td></tr><tr><td class="option-id">217</td><td><button type="button" class="coded-option" data-value="217">Urdu</button></td></tr><tr><td class="option-id">218</td><td><button type="button" class="coded-option" data-value="218">Persian/Farsi</button></td></tr><tr><td class="option-id">219</td><td><button type="button" class="coded-option" data-value="219">Swahili</button></td></tr><tr><td class="option-id">998</td><td><button type="button" class="coded-option" data-value="998">Other</button></td></tr><tr><td class="option-id">999</td><td><button type="button" class="coded-option" data-value="999">Prefer not to say</button></td></tr></tbody></table>
+              </div>
+            </div>
+          </div>
+        <div class="field">
+            <label for="birth-sex">Birth Sex</label>
+            <select id="birth-sex" name="birth-sex" class="native-coded-select" aria-hidden="true" tabindex="-1">
+              <option value="">Select birth sex</option><option value="1">Female (1)</option><option value="2">Male (2)</option><option value="3">Intersex / variations in sex characteristics (3)</option><option value="8">Unknown / not recorded (8)</option><option value="9">Prefer not to say (9)</option>
+            </select>
+            <div class="coded-dropdown" data-select="birth-sex">
+              <input type="text" class="coded-dropdown-toggle coded-search-input" aria-label="Birth Sex" aria-expanded="false" autocomplete="off" spellcheck="false">
+              <div class="coded-dropdown-menu" hidden>
+                <table class="coded-options-table" aria-label="birth-sex options"><thead><tr><th scope="col">ID</th><th scope="col">Option</th></tr></thead><tbody><tr><td class="option-id">1</td><td><button type="button" class="coded-option" data-value="1">Female</button></td></tr><tr><td class="option-id">2</td><td><button type="button" class="coded-option" data-value="2">Male</button></td></tr><tr><td class="option-id">3</td><td><button type="button" class="coded-option" data-value="3">Intersex / variations in sex characteristics</button></td></tr><tr><td class="option-id">8</td><td><button type="button" class="coded-option" data-value="8">Unknown / not recorded</button></td></tr><tr><td class="option-id">9</td><td><button type="button" class="coded-option" data-value="9">Prefer not to say</button></td></tr></tbody></table>
+              </div>
+            </div>
+          </div>
+        <div class="field">
+            <label for="religion">Religion</label>
+            <select id="religion" name="religion" class="native-coded-select" aria-hidden="true" tabindex="-1">
+              <option value="">Select religion</option><option value="1">Christianity (1)</option><option value="2">Islam (2)</option><option value="3">Hinduism (3)</option><option value="4">Buddhism (4)</option><option value="5">Judaism (5)</option><option value="6">Sikhism (6)</option><option value="7">Baháʼí Faith (7)</option><option value="8">Jainism (8)</option><option value="9">Shinto (9)</option><option value="10">Taoism (10)</option><option value="11">Traditional / Indigenous religion (11)</option><option value="12">Spiritual but not affiliated (12)</option><option value="13">Atheist (13)</option><option value="14">Agnostic (14)</option><option value="15">No religious affiliation (15)</option><option value="98">Other religion (98)</option><option value="99">Prefer not to say (99)</option>
+            </select>
+            <div class="coded-dropdown" data-select="religion">
+              <input type="text" class="coded-dropdown-toggle coded-search-input" aria-label="Religion" aria-expanded="false" autocomplete="off" spellcheck="false">
+              <div class="coded-dropdown-menu" hidden>
+                <table class="coded-options-table" aria-label="religion options"><thead><tr><th scope="col">ID</th><th scope="col">Option</th></tr></thead><tbody><tr><td class="option-id">1</td><td><button type="button" class="coded-option" data-value="1">Christianity</button></td></tr><tr><td class="option-id">2</td><td><button type="button" class="coded-option" data-value="2">Islam</button></td></tr><tr><td class="option-id">3</td><td><button type="button" class="coded-option" data-value="3">Hinduism</button></td></tr><tr><td class="option-id">4</td><td><button type="button" class="coded-option" data-value="4">Buddhism</button></td></tr><tr><td class="option-id">5</td><td><button type="button" class="coded-option" data-value="5">Judaism</button></td></tr><tr><td class="option-id">6</td><td><button type="button" class="coded-option" data-value="6">Sikhism</button></td></tr><tr><td class="option-id">7</td><td><button type="button" class="coded-option" data-value="7">Baháʼí Faith</button></td></tr><tr><td class="option-id">8</td><td><button type="button" class="coded-option" data-value="8">Jainism</button></td></tr><tr><td class="option-id">9</td><td><button type="button" class="coded-option" data-value="9">Shinto</button></td></tr><tr><td class="option-id">10</td><td><button type="button" class="coded-option" data-value="10">Taoism</button></td></tr><tr><td class="option-id">11</td><td><button type="button" class="coded-option" data-value="11">Traditional / Indigenous religion</button></td></tr><tr><td class="option-id">12</td><td><button type="button" class="coded-option" data-value="12">Spiritual but not affiliated</button></td></tr><tr><td class="option-id">13</td><td><button type="button" class="coded-option" data-value="13">Atheist</button></td></tr><tr><td class="option-id">14</td><td><button type="button" class="coded-option" data-value="14">Agnostic</button></td></tr><tr><td class="option-id">15</td><td><button type="button" class="coded-option" data-value="15">No religious affiliation</button></td></tr><tr><td class="option-id">98</td><td><button type="button" class="coded-option" data-value="98">Other religion</button></td></tr><tr><td class="option-id">99</td><td><button type="button" class="coded-option" data-value="99">Prefer not to say</button></td></tr></tbody></table>
+              </div>
+            </div>
+          </div>
+        <div class="field">
+            <label for="race">Race</label>
+            <select id="race" name="race" class="native-coded-select" aria-hidden="true" tabindex="-1">
+              <option value="">Select race</option><option value="1">American Indian or Alaska Native (1)</option><option value="2">Asian (2)</option><option value="3">Black or African American (3)</option><option value="4">Native Hawaiian or Other Pacific Islander (4)</option><option value="5">White (5)</option><option value="6">Two or more races (6)</option><option value="8">Another race / not listed (8)</option><option value="9">Prefer not to say (9)</option>
+            </select>
+            <div class="coded-dropdown" data-select="race">
+              <input type="text" class="coded-dropdown-toggle coded-search-input" aria-label="Race" aria-expanded="false" autocomplete="off" spellcheck="false">
+              <div class="coded-dropdown-menu" hidden>
+                <table class="coded-options-table" aria-label="race options"><thead><tr><th scope="col">ID</th><th scope="col">Option</th></tr></thead><tbody><tr><td class="option-id">1</td><td><button type="button" class="coded-option" data-value="1">American Indian or Alaska Native</button></td></tr><tr><td class="option-id">2</td><td><button type="button" class="coded-option" data-value="2">Asian</button></td></tr><tr><td class="option-id">3</td><td><button type="button" class="coded-option" data-value="3">Black or African American</button></td></tr><tr><td class="option-id">4</td><td><button type="button" class="coded-option" data-value="4">Native Hawaiian or Other Pacific Islander</button></td></tr><tr><td class="option-id">5</td><td><button type="button" class="coded-option" data-value="5">White</button></td></tr><tr><td class="option-id">6</td><td><button type="button" class="coded-option" data-value="6">Two or more races</button></td></tr><tr><td class="option-id">8</td><td><button type="button" class="coded-option" data-value="8">Another race / not listed</button></td></tr><tr><td class="option-id">9</td><td><button type="button" class="coded-option" data-value="9">Prefer not to say</button></td></tr></tbody></table>
+              </div>
+            </div>
+          </div>
+        <div class="field">
+          <label for="needs-translator">Needs a Translator</label>
+          <input type="text" id="needs-translator" name="needs-translator">
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+
+
+    // Searchable coded fields: typing filters the options table in real time.
+    document.querySelectorAll('.coded-dropdown').forEach((widget) => {
+      const select = document.getElementById(widget.dataset.select);
+      const input = widget.querySelector('.coded-search-input');
+      const menu = widget.querySelector('.coded-dropdown-menu');
+      const rows = Array.from(widget.querySelectorAll('.coded-options-table tbody tr'));
+
+      function filterOptions() {
+        const query = input.value.trim().toLocaleLowerCase();
+        let matches = 0;
+        rows.forEach((row) => {
+          const option = row.querySelector('.coded-option');
+          const id = row.querySelector('.option-id')?.textContent || '';
+          const text = option?.textContent || '';
+          const match = !query || text.toLocaleLowerCase().includes(query) || id.includes(query);
+          row.hidden = !match;
+          if (match) matches++;
+        });
+        let noResults = widget.querySelector('.coded-no-results');
+        if (matches === 0) {
+          if (!noResults) {
+            noResults = document.createElement('tr');
+            noResults.className = 'coded-no-results';
+            noResults.innerHTML = '<td colspan="2" class="empty-state">No matching options.</td>';
+            widget.querySelector('.coded-options-table tbody').appendChild(noResults);
+          }
+        } else if (noResults) noResults.remove();
+      }
+      function openMenu() {
+        document.querySelectorAll('.coded-dropdown-menu').forEach((other) => { other.hidden = true; });
+        document.querySelectorAll('.coded-search-input').forEach((other) => other.setAttribute('aria-expanded', 'false'));
+        menu.hidden = false;
+        input.setAttribute('aria-expanded', 'true');
+        filterOptions();
+      }
+      input.addEventListener('focus', openMenu);
+      input.addEventListener('input', () => { openMenu(); filterOptions(); });
+      input.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+          menu.hidden = true;
+          input.setAttribute('aria-expanded', 'false');
+        } else if (event.key === 'ArrowDown') {
+          const first = rows.find((row) => !row.hidden)?.querySelector('.coded-option');
+          if (first) { event.preventDefault(); first.focus(); }
+        }
+      });
+      widget.querySelectorAll('.coded-option').forEach((button) => {
+        button.addEventListener('click', () => {
+          select.value = button.dataset.value;
+          input.value = button.textContent.trim();
+          select.dispatchEvent(new Event('change', { bubbles: true }));
+          menu.hidden = true;
+          input.setAttribute('aria-expanded', 'false');
+        });
+      });
+      select.addEventListener('change', () => {
+        const selected = select.options[select.selectedIndex];
+        if (selected && selected.value) {
+          const matching = widget.querySelector(`.coded-option[data-value="${CSS.escape(selected.value)}"]`);
+          if (matching) input.value = matching.textContent.trim();
+        }
+      });
+      filterOptions();
+    });
+    document.addEventListener('click', (event) => {
+      if (!event.target.closest('.coded-dropdown')) {
+        document.querySelectorAll('.coded-dropdown-menu').forEach((menu) => { menu.hidden = true; });
+        document.querySelectorAll('.coded-search-input').forEach((input) => input.setAttribute('aria-expanded', 'false'));
+      }
+    });
+
+    const tabs = Array.from(document.querySelectorAll('[role="tab"]'));
+    const panels = Array.from(document.querySelectorAll('[role="tabpanel"]'));
+
+    function activateTab(tab) {
+      tabs.forEach((item) => {
+        const selected = item === tab;
+        item.setAttribute('aria-selected', String(selected));
+        item.tabIndex = selected ? 0 : -1;
+      });
+      panels.forEach((panel) => {
+        panel.hidden = panel.id !== tab.getAttribute('aria-controls');
+      });
+      tab.focus();
+    }
+
+    tabs.forEach((tab, index) => {
+      tab.addEventListener('click', () => activateTab(tab));
+      tab.addEventListener('keydown', (event) => {
+        let nextIndex = index;
+        if (event.key === 'ArrowRight') nextIndex = (index + 1) % tabs.length;
+        else if (event.key === 'ArrowLeft') nextIndex = (index - 1 + tabs.length) % tabs.length;
+        else return;
+        event.preventDefault();
+        activateTab(tabs[nextIndex]);
+      });
+    });
+
+    const rooms = [
+      { id: 'K100', beds: 2, name: 'Standard Single', status: 'E' },
+      { id: 'K101', beds: 2, name: 'Garden Twin', status: 'E' },
+      { id: 'K102', beds: 2, name: 'City View Double', status: 'O', patient: 'Female' },
+      { id: 'K103', beds: 2, name: 'Deluxe Queen', status: 'D' },
+      { id: 'K104', beds: 2, name: 'Family Suite', status: 'E' },
+      { id: 'K105', beds: 2, name: 'Accessible Double', status: 'O', patient: 'Male' },
+      { id: 'K106', beds: 2, name: 'Corner Single', status: 'D' },
+      { id: 'K107', beds: 2, name: 'Executive Twin', status: 'E' }
+    ];
+    const searchInput = document.getElementById('room-search');
+    const dropdown = document.getElementById('room-dropdown');
+    const resultsBody = document.getElementById('room-results');
+    const resultCount = document.getElementById('result-count');
+
+    function statusLabel(code) {
+      if (code === 'O') return 'Occupied';
+      if (code === 'E') return 'Empty';
+      return 'Dirty';
+    }
+
+    function renderRooms() {
+      const query = searchInput.value.trim().toLowerCase();
+      resultsBody.replaceChildren();
+      const matches = rooms.filter((room) =>
+        room.id.toLowerCase().includes(query) ||
+        String(Math.max(0, room.beds - (room.patient ? 1 : 0))).includes(query) ||
+        room.name.toLowerCase().includes(query) ||
+        room.status.toLowerCase().includes(query) ||
+        statusLabel(room.status).toLowerCase().includes(query)
+      );
+
+      if (matches.length === 0) {
+        const row = document.createElement('tr');
+        const cell = document.createElement('td');
+        cell.colSpan = 5;
+        cell.className = 'empty-state';
+        cell.textContent = 'No rooms match your search.';
+        row.appendChild(cell);
+        resultsBody.appendChild(row);
+      } else {
+        matches.forEach((room) => {
+          const row = document.createElement('tr');
+          row.tabIndex = 0;
+          row.setAttribute('role', 'option');
+          const availableBeds = Math.max(0, room.beds - (room.patient ? 1 : 0));
+          row.setAttribute('aria-label', `${room.name}, ${availableBeds} available bed${availableBeds === 1 ? '' : 's'}, ${statusLabel(room.status)}`);
+          row.dataset.roomName = room.name;
+          const bedsCell = document.createElement('td');
+          const nameCell = document.createElement('td');
+          const statusCell = document.createElement('td');
+          const patientCell = document.createElement('td');
+          const bedDetailsCell = document.createElement('td');
+          bedsCell.textContent = room.id;
+          nameCell.textContent = room.name;
+          statusCell.textContent = room.status;
+          patientCell.textContent = room.patient || '—';
+          patientCell.setAttribute('aria-label', room.patient ? `Patient sex: ${room.patient}` : 'No patient listed');
+          bedDetailsCell.textContent = String(availableBeds);
+          bedDetailsCell.setAttribute('aria-label', `${availableBeds} available bed${availableBeds === 1 ? '' : 's'}`);
+          statusCell.className = 'status status-' + room.status.toLowerCase();
+          statusCell.title = statusLabel(room.status);
+          statusCell.setAttribute('aria-label', statusLabel(room.status));
+          row.append(bedsCell, nameCell, statusCell, patientCell, bedDetailsCell);
+          resultsBody.appendChild(row);
+        });
+      }
+      dropdown.hidden = false;
+      searchInput.setAttribute('aria-expanded', 'true');
+      resultCount.textContent = `${matches.length} matching room${matches.length === 1 ? '' : 's'}. Status codes: O = Occupied, E = Empty, D = Dirty.`;
+    }
+
+    function closeRoomDropdown() {
+      dropdown.hidden = true;
+      searchInput.setAttribute('aria-expanded', 'false');
+    }
+    searchInput.addEventListener('input', renderRooms);
+    searchInput.addEventListener('focus', renderRooms);
+    resultsBody.addEventListener('click', (event) => {
+      const row = event.target.closest('tr[data-room-name]');
+      if (!row) return;
+      searchInput.value = row.dataset.roomName;
+      closeRoomDropdown();
+      resultCount.textContent = `Selected room: ${row.dataset.roomName}.`;
+    });
+    resultsBody.addEventListener('keydown', (event) => {
+      if ((event.key === 'Enter' || event.key === ' ') && event.target.matches('tr[data-room-name]')) {
+        event.preventDefault();
+        searchInput.value = event.target.dataset.roomName;
+        closeRoomDropdown();
+        resultCount.textContent = `Selected room: ${event.target.dataset.roomName}.`;
+        searchInput.focus();
+      }
+    });
+    document.addEventListener('click', (event) => {
+      if (!event.target.closest('.search-wrap')) closeRoomDropdown();
+    });
+    searchInput.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') closeRoomDropdown();
+      else if (event.key === 'ArrowDown' && !dropdown.hidden) {
+        const first = resultsBody.querySelector('tr[data-room-name]');
+        if (first) { event.preventDefault(); first.focus(); }
+      }
+    });
+
+    document.getElementById('sample-form').addEventListener('submit', function (event) {
+      event.preventDefault();
+      document.getElementById('form-message').textContent =
+        'Sample form submitted. No data was sent to a server.';
+    });
+  </script>
 </body>
 </html>
